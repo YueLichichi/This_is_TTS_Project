@@ -1,0 +1,20 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# 训练产物（缓存、模型权重、合成输出）
+backend/save/
+
+# 大型二进制文件
+*.pth
+*.zip
+
+# ffmpeg 可执行文件体积过大，请自行下载放入 ffmpeg/bin/
+ffmpeg/bin/
+
+# 系统与 IDE 文件
+.DS_Store
+Thumbs.db
+.idea/

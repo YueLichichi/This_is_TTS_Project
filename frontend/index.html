@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>这是TTS - 中文语音合成系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fb;
+            color: #1e293b;
+            line-height: 1.5;
+            padding: 24px 32px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .title-section h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+        .title-section p {
+            color: #475569;
+            margin-top: 6px;
+            font-size: 0.9rem;
+        }
+        .badge {
+            background: #eef2ff;
+            color: #1e40af;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 28px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 12px 12px 0 0;
+            position: relative;
+        }
+        .tab-btn.active {
+            color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.02);
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #2563eb;
+            border-radius: 3px 3px 0 0;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.03), 0 2px 6px rgba(0,0,0,0.05);
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            transition: box-shadow 0.2s;
+            border: 1px solid #eef2f6;
+        }
+        .card-title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #2563eb;
+            padding-left: 14px;
+        }
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 28px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            background: #fff;
+            font-family: 'Inter', monospace;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+        .param-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .param-row .form-group {
+            flex: 1;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        button.secondary {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+        }
+        button.danger {
+            background: #ef4444;
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        .progress-section {
+            margin-top: 20px;
+        }
+        .progress-bar-container {
+            background: #e2e8f0;
+            border-radius: 40px;
+            height: 12px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        .progress-fill {
+            background: #2563eb;
+            width: 0%;
+            height: 100%;
+            transition: width 0.2s;
+        }
+        .log-box {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 16px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            border: 1px solid #eef2ff;
+        }
+        .log-line {
+            padding: 4px 0;
+            border-bottom: 1px solid #e9edf2;
+            color: #334155;
+        }
+        .loss-chart-container {
+            margin-top: 18px;
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 10px;
+        }
+        canvas {
+            max-height: 280px;
+            width: 100%;
+        }
+        .audio-player {
+            background: #f1f5f9;
+            border-radius: 60px;
+            padding: 8px 16px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .audio-player audio {
+            flex: 1;
+            min-width: 200px;
+        }
+        .mel-img {
+            margin-top: 20px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            max-width: 100%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .toast-message {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px);
+            transition: 0.2s;
+        }
+        .error-toast {
+            background: #dc2626;
+        }
+        .tqdm-card {
+            background: #f8fafc;
+            margin-top: 16px;
+            padding: 16px !important;
+        }
+        .tqdm-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #475569;
+        }
+        .eval-result {
+            background: #eef2ff;
+            padding: 12px;
+            border-radius: 16px;
+            margin-top: 12px;
+        }
+        @media (max-width: 900px) {
+            body { padding: 16px; }
+            .grid-2col { grid-template-columns: 1fr; gap: 20px; }
+            .card { padding: 18px; }
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="title-section">
+            <h1><i class="fas fa-microphone-alt" style="color: #2563eb;"></i> 这是TTS</h1>
+            <p>中文语音合成系统 | 训练 与 合成 | 客观评测</p>
+        </div>
+        <div class="badge"><i class="fas fa-cloud-upload-alt"></i> 本地部署版</div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="train-tab"><i class="fas fa-chart-line"></i> 模型训练</button>
+        <button class="tab-btn" data-tab="synth-tab"><i class="fas fa-play-circle"></i> 语音合成</button>
+    </div>
+
+    <div id="train-tab" class="tab-content active">
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-sliders-h"></i> 训练配置</div>
+                <form id="trainForm">
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> 模型名称</label>
+                        <input type="text" name="model_name" value="my_tts_model" placeholder="例如: zh_female_01" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-folder-open"></i> 数据集路径</label>
+                        <input type="text" name="dataset_path" placeholder="/data/audio_text_pairs" value="">
+                        <small style="color:#64748b;">包含 .wav 和同名 .txt 的文件夹</small>
+                    </div>
+                    <div class="param-row">
+                        <div class="form-group"><label>训练轮数</label><input type="number" name="epochs" value="50" step="1" min="1"></div>
+                        <div class="form-group"><label>批次大小</label><input type="number" name="batch_size" value="4" step="1" min="1"></div>
+                        <div class="form-group"><label>学习率</label><input type="text" name="lr" value="3e-5" step="any"></div>
+                    </div>
+                    <div style="display: flex; gap: 12px; margin-top: 12px;">
+                        <button type="submit" id="startTrainBtn"><i class="fas fa-rocket"></i> 启动训练</button>
+                        <button type="button" id="stopTrainBtn" class="secondary" disabled><i class="fas fa-stop"></i> 停止训练</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-title"><i class="fas fa-chart-simple"></i> 训练监控</div>
+                <div class="progress-section">
+                    <div style="display: flex; justify-content: space-between;"><span>Epoch 进度</span><span id="epochStatus">0 / 0</span></div>
+                    <div class="progress-bar-container"><div class="progress-fill" id="trainProgressFill"></div></div>
+                </div>
+
+                <div class="card tqdm-card">
+                    <div class="card-title" style="font-size: 1rem; margin-bottom: 12px;"><i class="fas fa-tachometer-alt"></i> 实时训练进度</div>
+                    <div id="tqdmText" style="font-family: monospace; font-size: 0.9rem;">等待训练启动...</div>
+                    <div class="progress-bar-container" style="margin-top: 8px;">
+                        <div id="tqdmProgressFill" class="progress-fill" style="width:0%;"></div>
+                    </div>
+                    <div class="tqdm-stats">
+                        <span id="tqdmEpoch">Epoch 0/0</span>
+                        <span id="tqdmBatch">Batch 0/0</span>
+                        <span id="tqdmLoss">loss: 0.0000</span>
+                    </div>
+                </div>
+
+                <div class="loss-chart-container">
+                    <canvas id="lossChart" width="400" height="200" style="max-height: 240px;"></canvas>
+                </div>
+                <div><label><i class="fas fa-terminal"></i> 训练日志</label></div>
+                <div class="log-box" id="trainLogBox">
+                    <div class="log-line">⚙️ 等待训练启动...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="analysisArea" style="margin-top: 20px; display: none;">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-chart-bar"></i> 训练分析报告</div>
+                <div id="analysisImages" class="grid-2col" style="gap: 16px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="synth-tab" class="tab-content">
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-robot"></i> 合成参数</div>
+                <form id="synthForm">
+                    <div class="form-group">
+                        <label><i class="fas fa-cubes"></i> 选择模型包</label>
+                        <select id="modelSelect" name="model_name" required>
+                            <option value="">-- 加载中 --</option>
+                        </select>
+                        <small>模型包位于 save/model_packages/ 下</small>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-file-alt"></i> 合成文本</label>
+                        <textarea name="text" rows="4" placeholder="输入要合成的中文文本...">与很多人之间，并非没有纷争与争执，但在偶然的命运相交之时，我也愿意暂时放下这些，望向我们共同的未来。</textarea>
+                        <button type="button" id="uploadTxtBtn" class="secondary" style="margin-top: 8px; font-size:0.8rem;"><i class="fas fa-upload"></i> 上传 .txt 文件</button>
+                        <input type="file" id="txtFileInput" accept=".txt" style="display: none;">
+                    </div>
+                    <div class="param-row">
+                        <div class="form-group"><label>音量 (0.5~2.0)</label><input type="number" name="volume" step="0.05" value="1.0" min="0.5" max="2.0"></div>
+                        <div class="form-group"><label>音调偏移 (±12半音)</label><input type="number" name="pitch" value="0" step="1" min="-12" max="12"></div>
+                        <div class="form-group"><label>语速 (0.6~2.0)</label><input type="number" name="speed" step="0.05" value="1.0" min="0.6" max="2.0"></div>
+                    </div>
+                    <button type="submit" id="synthBtn"><i class="fas fa-waveform"></i> 开始合成</button>
+                </form>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fas fa-headphones"></i> 合成结果</div>
+                <div id="synthResultArea">
+                    <div style="text-align: center; color: #94a3b8; padding: 20px;"><i class="fas fa-music"></i> 等待合成任务</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>© 这是TTS | 支持客观评测 (MCD+STOI)</footer>
+</div>
+
+<script>
+    let trainingPollingInterval = null;
+    let lossChart = null;
+    let currentTrainLosses = [];
+    let currentValLosses = [];
+    let currentAccuracies = [];
+    let lastSynAudioPath = null;
+
+    function showToast(message, isError = false) {
+        let toast = document.createElement('div');
+        toast.className = 'toast-message' + (isError ? ' error-toast' : '');
+        toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 4000);
+    }
+
+    const API_BASE = '';
+
+    async function loadModelPackages() {
+        try {
+            const res = await fetch(`${API_BASE}/api/list_models`);
+            const data = await res.json();
+            const select = document.getElementById('modelSelect');
+            if (data.models && data.models.length) {
+                select.innerHTML = '<option value="">-- 请选择模型 --</option>' + data.models.map(m => `<option value="${m}">${m}</option>`).join('');
+            } else {
+                select.innerHTML = '<option value="">暂无模型，请先训练</option>';
+            }
+        } catch (e) {
+            console.warn('获取模型列表失败', e);
+            document.getElementById('modelSelect').innerHTML = '<option value="">无法连接后端</option>';
+        }
+    }
+
+    function initLossChart(trainData, valData, accData) {
+        const ctx = document.getElementById('lossChart').getContext('2d');
+        if (lossChart) lossChart.destroy();
+        lossChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: Math.max(trainData.length, 1)}, (_,i) => i+1),
+                datasets: [
+                    { label: '训练损失', data: trainData, borderColor: '#3b82f6', yAxisID: 'y', tension: 0.2 },
+                    { label: '验证损失', data: valData, borderColor: '#f97316', yAxisID: 'y', tension: 0.2 },
+                    { label: '准确率', data: accData, borderColor: '#10b981', yAxisID: 'y1', tension: 0.2, borderDash: [5, 5] }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: '损失值' } },
+                    y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: '准确率' }, min: 0, max: 1, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    }
+
+    function updateLossChart(trainLosses, valLosses, accuracies) {
+        const dataLength = trainLosses.length;
+        if (lossChart) {
+            // 同步更新 X 轴标签
+            lossChart.data.labels = Array.from({ length: dataLength }, (_, i) => i + 1);
+            lossChart.data.datasets[0].data = trainLosses;
+            lossChart.data.datasets[1].data = valLosses;
+            lossChart.data.datasets[2].data = accuracies;
+            // 更新 X 轴最大范围
+            lossChart.options.scales.x.max = Math.max(dataLength, 1);
+            // 准确率 Y 轴建议使用自动范围
+            if (lossChart.options.scales.y1) {
+                delete lossChart.options.scales.y1.min;
+                delete lossChart.options.scales.y1.max;
+            }
+            lossChart.update();
+        } else {
+            initLossChart(trainLosses, valLosses, accuracies);
+        }
+    }
+
+    async function fetchTrainingStatus() {
+        try {
+            const res = await fetch(`${API_BASE}/api/train_status`);
+            const status = await res.json();
+            if (!status) return;
+
+            const epochPercent = status.total_epochs ? (status.progress / status.total_epochs) * 100 : 0;
+            document.getElementById('trainProgressFill').style.width = `${epochPercent}%`;
+            document.getElementById('epochStatus').innerText = `${status.progress} / ${status.total_epochs}`;
+
+            if (status.running || status.current_epoch > 0) {
+                document.getElementById('tqdmText').innerHTML = '🚀 训练中 ...';
+                document.getElementById('tqdmEpoch').innerHTML = `Epoch ${status.current_epoch || 0}/${status.total_epochs || 0}`;
+                document.getElementById('tqdmBatch').innerHTML = `Batch ${status.current_batch || 0}/${status.total_batches || 0}`;
+                document.getElementById('tqdmLoss').innerHTML = `loss: ${(status.current_loss || 0).toFixed(6)}`;
+                const batchProgress = status.batch_progress || 0;
+                document.getElementById('tqdmProgressFill').style.width = `${batchProgress}%`;
+                document.getElementById('tqdmProgressFill').style.backgroundColor = batchProgress === 100 ? '#10b981' : '#2563eb';
+            } else if (!status.running && status.total_epochs > 0) {
+                document.getElementById('tqdmText').innerHTML = '✅ 训练完成！';
+                document.getElementById('tqdmProgressFill').style.width = '100%';
+            } else {
+                document.getElementById('tqdmText').innerHTML = '等待训练启动...';
+                document.getElementById('tqdmProgressFill').style.width = '0%';
+            }
+
+            if (status.log && status.log.length) {
+                const logDiv = document.getElementById('trainLogBox');
+                logDiv.innerHTML = status.log.slice(-30).map(l => `<div class="log-line">📌 ${l}</div>`).join('');
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+
+            if (status.train_losses && status.val_losses && status.val_accuracies) {
+                currentTrainLosses = status.train_losses;
+                currentValLosses = status.val_losses;
+                currentAccuracies = status.val_accuracies;
+                updateLossChart(currentTrainLosses, currentValLosses, currentAccuracies);
+            }
+
+            if (!status.running && trainingPollingInterval) {
+                clearInterval(trainingPollingInterval);
+                trainingPollingInterval = null;
+                document.getElementById('startTrainBtn').disabled = false;
+                document.getElementById('stopTrainBtn').disabled = true;
+                if (status.log && status.log.some(l => l.includes('手动停止'))) {
+                    showToast('⏸️ 训练已手动停止，当前模型已保存', false);
+                } else {
+                    showToast('✅ 训练已完成！模型已保存至 model_packages', false);
+                }
+
+                if (status.analysis_images && status.analysis_images.length) {
+                    const analysisDiv = document.getElementById('analysisArea');
+                    const imagesContainer = document.getElementById('analysisImages');
+                    imagesContainer.innerHTML = '';
+                    status.analysis_images.forEach(url => {
+                        if (url.endsWith('.png')) {
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            card.style.padding = '12px';
+                            card.innerHTML = `<img src="${url}" style="width:100%; border-radius:12px;" alt="分析图表">`;
+                            imagesContainer.appendChild(card);
+                        } else if (url.endsWith('.txt')) {
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            card.style.padding = '16px';
+                            card.innerHTML = `<a href="${url}" target="_blank" style="text-decoration:none;"><i class="fas fa-file-alt"></i> 下载收敛性报告</a>`;
+                            imagesContainer.appendChild(card);
+                        }
+                    });
+                    analysisDiv.style.display = 'block';
+                }
+            }
+        } catch (err) {
+            console.error('轮询失败', err);
+        }
+    }
+
+    async function startTraining(data) {
+        try {
+            const res = await fetch(`${API_BASE}/api/train`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || '启动失败');
+            }
+            showToast('训练任务已启动，请等待进度更新');
+            document.getElementById('startTrainBtn').disabled = true;
+            document.getElementById('stopTrainBtn').disabled = false;
+            if (trainingPollingInterval) clearInterval(trainingPollingInterval);
+            trainingPollingInterval = setInterval(fetchTrainingStatus, 1000);
+            fetchTrainingStatus();
+        } catch (err) {
+            showToast(err.message, true);
+            document.getElementById('startTrainBtn').disabled = false;
+        }
+    }
+
+    async function stopTraining() {
+        try {
+            const res = await fetch(`${API_BASE}/api/stop_train`, { method: 'POST' });
+            const data = await res.json();
+            showToast(data.message || '已发送停止请求');
+            document.getElementById('stopTrainBtn').disabled = true;
+        } catch (err) {
+            showToast('停止请求失败: ' + err.message, true);
+        }
+    }
+
+    async function startEvaluation() {
+        if (!lastSynAudioPath) {
+            showToast('没有可评测的合成音频，请先合成语音', true);
+            return;
+        }
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'audio/wav';
+        fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const evalResultDiv = document.getElementById('evalResult');
+            evalResultDiv.innerHTML = '<div class="spinner" style="margin: 8px auto;"></div><div>正在评测，请稍候...</div>';
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                const uploadRes = await fetch(`${API_BASE}/api/upload_ref`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!uploadRes.ok) {
+                    const err = await uploadRes.json();
+                    throw new Error(err.error || '上传失败');
+                }
+                const { temp_path } = await uploadRes.json();
+                const evalRes = await fetch(`${API_BASE}/api/evaluate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        syn_audio_path: lastSynAudioPath,
+                        ref_audio_path: temp_path
+                    })
+                });
+                if (!evalRes.ok) {
+                    const err = await evalRes.json();
+                    throw new Error(err.error || '评测失败');
+                }
+                const evalData = await evalRes.json();
+                let stoiText = evalData.stoi !== null ? evalData.stoi.toFixed(4) : '未安装pystoi';
+                evalResultDiv.innerHTML = `
+                    <div class="eval-result">
+                        <strong>📊 客观评测结果</strong><br>
+                        MCD (梅尔倒谱失真): <strong>${evalData.mcd}</strong> (越小越好, 通常<10为优)<br>
+                        STOI (短时可懂度): <strong>${stoiText}</strong> (越接近1越可懂)
+                    </div>
+                `;
+                showToast('评测完成');
+            } catch (err) {
+                evalResultDiv.innerHTML = `<div style="color:#dc2626;">评测失败: ${err.message}</div>`;
+                showToast(err.message, true);
+            }
+        };
+        fileInput.click();
+    }
+
+    async function synthesizeSpeech(data) {
+        const synthBtn = document.getElementById('synthBtn');
+        const originalText = synthBtn.innerHTML;
+        synthBtn.disabled = true;
+        synthBtn.innerHTML = '<span class="spinner"></span> 合成中...';
+        const resultDiv = document.getElementById('synthResultArea');
+        try {
+            const res = await fetch(`${API_BASE}/api/synthesize`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || '合成失败');
+            }
+            const result = await res.json();
+            lastSynAudioPath = result.local_path;
+            let audioHtml = `<div class="audio-player"><i class="fas fa-play-circle" style="font-size:1.6rem;"></i><audio controls src="${result.audio_url}" style="width:100%;">您的浏览器不支持音频播放</audio></div>`;
+            let melHtml = '';
+            if (result.mel_url) {
+                melHtml = `<img class="mel-img" src="${result.mel_url}" alt="梅尔频谱图" style="max-width:100%; border-radius:16px;">`;
+            } else {
+                melHtml = `<div class="log-box" style="margin-top:12px;"><i class="fas fa-chart-simple"></i> 未返回频谱图，请检查后端</div>`;
+            }
+            const evalHtml = `
+                <div style="margin-top: 16px;">
+                    <button id="evalBtn" class="secondary"><i class="fas fa-chart-line"></i> 客观评测 (MCD+STOI)</button>
+                    <div id="evalResult" style="margin-top: 12px;"></div>
+                </div>
+            `;
+            resultDiv.innerHTML = audioHtml + melHtml + evalHtml;
+            document.getElementById('evalBtn').addEventListener('click', startEvaluation);
+            showToast('✅ 合成成功，可播放语音');
+        } catch (err) {
+            resultDiv.innerHTML = `<div style="color:#dc2626; padding:16px; background:#fee2e2; border-radius:20px;"><i class="fas fa-exclamation-circle"></i> 合成错误: ${err.message}</div>`;
+            showToast(err.message, true);
+        } finally {
+            synthBtn.disabled = false;
+            synthBtn.innerHTML = originalText;
+        }
+    }
+
+    document.getElementById('uploadTxtBtn').addEventListener('click', () => {
+        document.getElementById('txtFileInput').click();
+    });
+    document.getElementById('txtFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            document.querySelector('textarea[name="text"]').value = ev.target.result;
+            showToast('已加载文本文件');
+        };
+        reader.readAsText(file, 'UTF-8');
+    });
+
+    document.getElementById('trainForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = {
+            model_name: formData.get('model_name'),
+            dataset_path: formData.get('dataset_path') || '',
+            epochs: parseInt(formData.get('epochs')),
+            batch_size: parseInt(formData.get('batch_size')),
+            lr: parseFloat(formData.get('lr'))
+        };
+        if (!data.model_name) { showToast('请输入模型名称', true); return; }
+        if (data.dataset_path && !data.dataset_path.trim()) delete data.dataset_path;
+        await startTraining(data);
+    });
+
+    document.getElementById('synthForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const modelName = document.getElementById('modelSelect').value;
+        if (!modelName) { showToast('请选择一个模型包', true); return; }
+        const formData = new FormData(e.target);
+        const data = {
+            model_name: modelName,
+            text: formData.get('text'),
+            volume: parseFloat(formData.get('volume')),
+            pitch: parseInt(formData.get('pitch')),
+            speed: parseFloat(formData.get('speed'))
+        };
+        if (!data.text.trim()) { showToast('请输入合成文本', true); return; }
+        await synthesizeSpeech(data);
+    });
+
+    document.getElementById('stopTrainBtn').addEventListener('click', stopTraining);
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (tabId === 'synth-tab') loadModelPackages();
+        });
+    });
+
+    loadModelPackages();
+    fetchTrainingStatus();
+</script>
+</body>
+</html>
